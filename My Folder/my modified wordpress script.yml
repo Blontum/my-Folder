@@ -1,0 +1,73 @@
+# create to root user
+sudo su
+# update the software packages on the ec2 instance
+sudo yum update -y
+# Try connectivity to your DB from EC2
+sudo dnf install mariadb105-server  #(For 2023 Amazon Linux AMI)
+mysql -h hostname -u admin -p # modify host with that of database, user name with that from data base and pass word
+# create an html directory
+sudo mkdir /var/www/
+sudo mkdir /var/www/html/
+# Let's check the mounted partition
+  df -Th
+# Install the amazon-efs-utils package
+sudo yum install -y amazon-efs-utils
+
+# Let's mount our Amazon EFS file System on EC2 in the destination /var/www/html/
+sudo mount -t efs -o tls fs-08186cfc152e2b0a6:/ /var/www/html/  # modify sudo mount -t efs -o tls fs-0a69f256e896b9543  with new one from efs id
+# Let's edit the "fstab" file in linux
+
+sudo vi /etc/fstab # once in, modify the by inserting "<file_system_id>.efs.<region>.amazonaws.com:/ /var/www/html/ efs defaults,_netdev 0 0"
+ example to modify is:  fs-08186cfc152e2b0a6.efs.us-east-1.amazonaws.com:/ /var/www/html/ efs defaults,_netdev 0 0 # copied first part from efs
+# once done, press esc, : , w, q, and enter  to save and return to original
+
+# install the apache web server, enable it to start on boot, and then start the server immediately
+sudo yum install -y httpd
+sudo systemctl enable httpd
+sudo systemctl start httpd
+
+# Download and Configure WordPress
+sudo wget https://wordpress.org/latest.tar.gz
+
+sudo tar -xzf latest.tar.gz
+
+cd wordpress
+
+sudo cp wp-config-sample.php wp-config.php
+
+sudo cp -r * /var/www/html/ # if u are in wordpress, use the command
+
+sudo cp -r /wordpress/* /var/www/html/ . # use this if you are out of wordpess
+
+sudo systemctl restart httpd   # -test ur load balancer. it should say, "it works!"
+# install the application dependencies for wordpress
+sudo dnf update -y
+
+sudo dnf install -y httpd wget php-fpm php-mysqli php-json php php-devel
+
+sudo systemctl restart httpd # test alb, it should read "Error establishing a database connection"
+
+# edit the "wp-config.php" with our database information
+sudo vi /var/www/html/wp-config.php # edit the DB name,DB user, DB Password, Db host name
+# once done, press esc, : , w, q, and enter  to save and return to original
+
+# restart the webserver
+sudo systemctl restart httpd
+
+
+
+# use the part below to secure your webpage
+
+
+/* SSL Settings */
+define('FORCE_SSL_ADMIN', true);
+// Get true SSL status from AWS load balancer
+if(isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+  $_SERVER['HTTPS'] = '1';
+}
+
+
+
+
+
+sudo systemctl restart httpd

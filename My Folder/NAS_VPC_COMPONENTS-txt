@@ -1,0 +1,71 @@
+NAS_FIN_VPC:                     
+              - CIDR BLOCK: 10.0.0.0/16
+              - Enable DNS host name 
+    Create NAS_FIN_IGW:
+              - Attash the igw at 0.0.0.0/0
+provision 6 subnet:
+        NAS_FIN_SN_PUBLIC1:
+            - US east-1a
+            - CIDR block: 10.0.0.0/20
+        NAS_FIN_SN_PRIVATE1:
+            - US east-1a
+            - CIDR BLOCK: 10.0.128.0/20
+        NAS_FIN_SN_PRIVATE3:
+            - US east-1a
+            - CIDR BLOCK: 10.0.160.0/20
+        NAS_FIN_SN_PUBLIC2:
+            - US-east-1b
+            - CIDR  BLOCK: 10.0.16.0/20
+        NAS_FIN_SN_PRIVATE2:
+            - US east-1b
+            - CIDR BLOCK: 10.0.160.0/20
+        NAS_FIN_SN_PRIVATE4:
+            - US east-1b
+            - CIDR BLOCK: 10.O.176.0/20
+
+PROVISION ROUTE TABLES:
+    - NAS-FIN-main-RT: auto-assigned
+    - NAS_FIN_PUBLIC_RT: - # destination is 0.0.0.0/0 - igw
+            - Associate with public subnets
+            - target is IGW
+    - NAS_FIN_PRIVATE_RT: - # destination is nat-gate-way to internet
+            - associate with the 4 private subnets
+            - target is nat gate way through the public_subnet_1a
+       create NAS_FIN_NAT-gaste-way:
+
+provision security groups: - # 5 security groups will be created
+
+    - NAS_FIN_ALB_SG:
+          - Inbount role: - HTTP - 80 - # From any where(0.0.0.0/0)
+                          - HTTP - 443 - # From any where(0.0.0.0/0)
+
+    - NAS_FIN_ECIP_SG: - # EC2 Connect endpoint 
+          - INBOUNT ROLE: - SSH - 22 - # from vpc CIDR block- 10.0.0.0/16
+
+    - NAS_FIN_Webser_SG:  - HTTP - 80 - # From NAS_FIN_ALB_SG
+                          - HTTPS _ 443 - # from NAS_FIN_ALB_SG
+                          - SSH - 22 - # FROM NAS_FIN_ECIP_SG
+
+    - NAS_FIN_DATABASE_SG: - MYSQL/AURORA - 3306 - #  FROM NAS_FIN_Webser_SG    
+
+    - NAS_FIN_EFS_SG: - NFS - 2049 - # FROM NAS_FIN_Webser_SG
+                      - SSH - 22 -  # FROM NAS_FIN_ECIP_SG---  Create and then go back to NAS_FIN_SG
+                      - NFS - 2049 - # from NAS_FIN_EFS_SG ---according ton documentation
+    
+    - EC2 INSTANCE ENDPOINT CREATION:
+                - create endpoint: NAS_FIN_ECIP_EP - Ec2 connect
+                                                  - NAS_FIN_VPC
+                                                  - choose NAS_FIN_ECIP_SG
+                                                  - choose  NAS_FIN_SN_PRIVATE1
+    - ctreate a test-ec2 instance: 
+    - connect using ec2-instance connect or use ssm to connect
+                                            - 
+                - 
+
+
+
+          -                    
+
+
+    - 
+        
